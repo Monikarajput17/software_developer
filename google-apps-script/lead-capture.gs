@@ -1,5 +1,6 @@
 const LEAD_SHEET_NAME = 'Website Leads';
 const LEAD_EMAIL_TO = 'devimonika17may@gmail.com';
+const LEAD_SPREADSHEET_ID = '13Jym3h4-LWRb6Lh15UI9ahIXLT2-IqVdHnw1BQNPfKI';
 
 const LEAD_COLUMNS = [
   'Submitted At',
@@ -46,8 +47,16 @@ function doPost(event) {
   }
 }
 
+function doGet() {
+  return jsonResponse_({
+    ok: true,
+    message: 'MONIKA.DEV lead capture is live',
+    sheetName: LEAD_SHEET_NAME
+  });
+}
+
 function getLeadSheet_() {
-  const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  const spreadsheet = SpreadsheetApp.openById(LEAD_SPREADSHEET_ID);
   let sheet = spreadsheet.getSheetByName(LEAD_SHEET_NAME);
 
   if (!sheet) {
