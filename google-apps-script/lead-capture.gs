@@ -1,5 +1,5 @@
 const LEAD_SHEET_NAME = 'Website Leads';
-const LEAD_EMAIL_TO = 'your-email@example.com';
+const LEAD_EMAIL_TO = 'devimonika17may@gmail.com';
 
 const LEAD_COLUMNS = [
   'Submitted At',
