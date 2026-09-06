@@ -707,12 +707,50 @@ function About() {
 }
 
 function Contact() {
-  const [sent, setSent] = useState(false);
+  const [submission, setSubmission] = useState({ status: 'idle', message: '' });
   const industriesList = ['MEP / Construction', 'Architecture', 'Manufacturing', 'Salon / Beauty', 'Healthcare', 'Education', 'Retail', 'Trading', 'Logistics', 'Professional Services', 'Other'];
   const requirementList = ['New Software', 'ERP', 'CRM', 'HRMS', 'Customization', 'Automation', 'Dashboard', 'AI Integration', 'API Integration', 'Existing Software Improvement', 'Other'];
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
-    setSent(true);
+    const endpoint = import.meta.env.VITE_LEAD_WEBHOOK_URL;
+    const form = event.currentTarget;
+    const lead = Object.fromEntries(new FormData(form).entries());
+    lead.submittedAt = new Date().toISOString();
+    lead.source = window.location.href;
+
+    if (!endpoint) {
+      setSubmission({
+        status: 'error',
+        message: 'Lead capture is not connected yet. Add your Google Apps Script web app URL in VITE_LEAD_WEBHOOK_URL.'
+      });
+      return;
+    }
+
+    setSubmission({ status: 'sending', message: 'Sending your requirement...' });
+
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(lead)
+      });
+
+      if (response.type !== 'opaque' && !response.ok) {
+        throw new Error('Lead submission failed');
+      }
+
+      form.reset();
+      setSubmission({
+        status: 'success',
+        message: 'Thank you. Your requirement has been sent and saved as a lead.'
+      });
+    } catch (error) {
+      setSubmission({
+        status: 'error',
+        message: 'Something went wrong while sending the lead. Please try again or contact directly by email/WhatsApp.'
+      });
+    }
   }
   return (
     <section className="contact-section" id="contact">
@@ -727,6 +765,10 @@ function Contact() {
         </div>
       </div>
       <form className="contact-form" onSubmit={handleSubmit}>
+        <div className="lead-capture-note">
+          <ShieldCheck size={18} aria-hidden="true" />
+          <span>Submissions can be saved in Google Sheets and sent to email after lead capture setup.</span>
+        </div>
         <div className="form-grid">
           <label>Name<input required name="name" autoComplete="name" /></label>
           <label>Company<input name="company" autoComplete="organization" /></label>
@@ -741,10 +783,12 @@ function Contact() {
         <label>What would you like to build or customize?<textarea name="build" rows="3" /></label>
         <label>Message<textarea name="message" rows="3" /></label>
         <div className="form-actions">
-          <button className="primary-button" type="submit">Discuss My Requirement <ArrowRight size={18} /></button>
+          <button className="primary-button" type="submit" disabled={submission.status === 'sending'}>
+            {submission.status === 'sending' ? 'Sending...' : 'Discuss My Requirement'} <ArrowRight size={18} />
+          </button>
           <button className="secondary-button" type="button" onClick={() => scrollToId('top')}>Request a Consultation</button>
         </div>
-        {sent && <p className="form-note" role="status">Thank you. Your requirement summary is ready to be connected to your preferred email or form backend.</p>}
+        {submission.message && <p className={`form-note ${submission.status}`} role="status">{submission.message}</p>}
       </form>
     </section>
   );
